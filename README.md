@@ -107,6 +107,8 @@ VPN: No
 Location: Latitude: -6.224544, Longitude: 106.825807
 View on Google Maps
 ```
+![image](https://github.com/user-attachments/assets/478f22c9-e73c-4f9b-8e9c-e40ee9647e22)
+
 
 The "View on Google Maps" link opens Google Maps with the user's current location.
 
