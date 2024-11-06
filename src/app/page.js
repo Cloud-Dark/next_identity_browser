@@ -7,19 +7,17 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 export default function Home() {
   const [deviceId, setDeviceId] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
+  const [location, setLocation] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const getDeviceId = async () => {
-      // Check if deviceId exists in localStorage
       let storedDeviceId = localStorage.getItem('deviceId');
       
       if (!storedDeviceId) {
-        // Load the FingerprintJS agent and generate a new fingerprint
         const fp = await FingerprintJS.load();
         const result = await fp.get();
         
-        // Send the fingerprint to the API to retrieve a device ID
         const response = await fetch('/api/device-id', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -28,26 +26,40 @@ export default function Home() {
         const data = await response.json();
         storedDeviceId = data.deviceId;
 
-        // Store the device ID in localStorage to persist it across sessions
         localStorage.setItem('deviceId', storedDeviceId);
       }
 
-      // Set the device ID state
       setDeviceId(storedDeviceId);
     };
 
     const fetchUserData = async () => {
-      // Fetch additional user info (such as IP and browser)
       const response = await fetch('/api/user');
       const data = await response.json();
       setUserInfo(data);
     };
 
-    // Fetch the device ID and user info
+    const getLocation = () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocation({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+          },
+          (error) => {
+            console.error("Error fetching location:", error);
+          }
+        );
+      } else {
+        console.error("Geolocation is not supported by this browser.");
+      }
+    };
+
     getDeviceId();
     fetchUserData();
+    getLocation();
 
-    // Set loading to false once data has been fetched
     setIsLoading(false);
   }, []);
 
@@ -78,6 +90,23 @@ export default function Home() {
           <div className="data">{userInfo.incognito}</div>
           <div className="title">VPN</div>
           <div className="data">{userInfo.vpn}</div>
+          {location && (
+            <>
+              <div className="title">Location</div>
+              <div className="data">
+                Latitude: {location.latitude}, Longitude: {location.longitude}
+              </div>
+              <div className="data">
+                <a
+                  href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  View on Google Maps
+                </a>
+              </div>
+            </>
+          )}
         </div>
       ) : (
         <p>Loading...</p>
@@ -96,7 +125,7 @@ export default function Home() {
           padding: 20px;
           background: #ffffff;
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          width: 500px;
+          width: 400px;
           text-align: center;
           color: #333;
         }
@@ -109,6 +138,10 @@ export default function Home() {
         .data {
           margin: 8px 0;
           font-weight: normal;
+        }
+        .data a {
+          color: #0070f3;
+          text-decoration: none;
         }
       `}</style>
     </div>
