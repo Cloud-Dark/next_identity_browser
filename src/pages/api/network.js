@@ -1,4 +1,4 @@
-// src/pages/api/network.js
+
 import os from 'os';
 
 export default function handler(req, res) {
@@ -11,7 +11,7 @@ export default function handler(req, res) {
     ethernetIp: null
   };
 
-  // Iterate through the network interfaces
+  
   for (const name of Object.keys(networkInterfaces)) {
     for (const net of networkInterfaces[name]) {
       if (net.family === 'IPv4' && !net.internal) {

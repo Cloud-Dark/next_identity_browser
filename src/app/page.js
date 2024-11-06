@@ -2,31 +2,66 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 export default function Home() {
+  const [deviceId, setDeviceId] = useState(null);
   const [userInfo, setUserInfo] = useState(null);
-  const [userId, setUserId] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch user data from the API
+    const getDeviceId = async () => {
+      // Check if deviceId exists in localStorage
+      let storedDeviceId = localStorage.getItem('deviceId');
+      
+      if (!storedDeviceId) {
+        // Load the FingerprintJS agent and generate a new fingerprint
+        const fp = await FingerprintJS.load();
+        const result = await fp.get();
+        
+        // Send the fingerprint to the API to retrieve a device ID
+        const response = await fetch('/api/device-id', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fingerprint: result.visitorId }),
+        });
+        const data = await response.json();
+        storedDeviceId = data.deviceId;
+
+        // Store the device ID in localStorage to persist it across sessions
+        localStorage.setItem('deviceId', storedDeviceId);
+      }
+
+      // Set the device ID state
+      setDeviceId(storedDeviceId);
+    };
+
     const fetchUserData = async () => {
+      // Fetch additional user info (such as IP and browser)
       const response = await fetch('/api/user');
       const data = await response.json();
       setUserInfo(data);
     };
 
+    // Fetch the device ID and user info
+    getDeviceId();
     fetchUserData();
 
-    // Generate userId on the client side after component mounts
-    setUserId(Math.random().toString(36).substring(2, 18));
+    // Set loading to false once data has been fetched
+    setIsLoading(false);
   }, []);
+
+  // Render a loading placeholder until client-side data is available
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
 
   return (
     <div className="container">
-      {userInfo ? (
+      {deviceId && userInfo ? (
         <div className="card">
           <div className="title">Your ID</div>
-          <div className="data">{userId || 'Loading...'}</div>
+          <div className="data">{deviceId}</div>
           <div className="title">IP Address</div>
           <div className="data">{userInfo.clientIp}</div>
           <div className="title">IPv4</div>
@@ -61,7 +96,7 @@ export default function Home() {
           padding: 20px;
           background: #ffffff;
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-          width: 300px;
+          width: 500px;
           text-align: center;
           color: #333;
         }

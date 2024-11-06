@@ -1,4 +1,4 @@
-// src/pages/api/user.js
+
 import os from 'os';
 import requestIp from 'request-ip';
 import useragent from 'useragent';
@@ -35,7 +35,7 @@ export default function handler(req, res) {
     }
   }
 
-  // Generate userId only once on the server
+  
   const userId = Math.random().toString(36).substring(2, 18);
 
   res.status(200).json({
